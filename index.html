@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Signed Arithmetic Practice: Generate custom worksheets or practice online.</title>
+    <!--meta http-equiv="cache-control" content="no-cache" /-->
+    <meta name="description" content="Generate math assignments online.  Practice math assignments online." />
+    <meta name="keywords" content="Arithmetic practice, Signed integer math, Exponents, Percents, Multiplication, Division, Addition, Subtraction" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    <script type="text/javascript"
+     src="http://cdn.jquerytools.org/1.2.1/full/jquery.tools.min.js"></script>
+    <!--script 
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
+    </script-->
+    <script type="text/javascript" 
+	    		src="/javascript/jquery.colors.js"></script>
+    <script type="text/javascript" 
+	    		src="/javascript/jquery.easing.1.3.js"></script>
+    <script type="text/javascript" src="/javascript/ajax.js"></script>
+{% block stylesheet %}
+    <style type="text/css">
+    </style>
+{% endblock stylesheet %}
+  </head>
+  <body>
+    <div id="wrap">
+{% block logos %}
+<!--img src="../images/Minus.jpg" alt="Minus Symbol as logo"  class="imgfltleft"/>
+<img src="../images/Plus.jpg" alt="Plus Symbol as logo"  class="imgfltright"/-->
+{% endblock logos %}
+{% block debug %}
+    {% ifequal showdebug 'true' %}
+	  <p>Ans: {{answer}}</p>
+	  <p>Status: {{status}}</p>
+	  <p>Message: {{message}}</p>
+	  <p>Problems: {{problems}}</p>
+	  <p>{{info}}</p>
+    {% endifequal %}
+{% endblock debug %}
+{% block sessionctrl %}
+<div id="problemset">
+      <div id="sessionctrl">
+	{{author}}&nbsp;&nbsp;&nbsp;
+	<a id="alogout" class="control" title="Logout and email history report." href="/logout">Logout</a>
+	{% if not showreport %}
+	<a id="getrecords" rel="" class="control"  href="/records">Report</a>
+      <div id="recordtip" class="tooltip">
+	  <img src="http://chart.apis.google.com/chart?cht=p3&chd=t:60,40&chs=225x100&chl=Math|Rules&chco=3072F3|FF0000&chf=bg,s,92E095" alt="View reprot."/>
+	  <p>See your summary report.</p>
+      </div>
+	{% else %}
+	<a id="getproblemset" rel="" class="control" title="View problem set." href="/">Problems</a>
+	{% endif %}
+	<a id="clearrecords" class="control" title="Clear problem set history" href="/clear">Start Again</a>
+      </div>
+	<form id="answerform" action="/check" method="post">
+{% endblock sessionctrl %}
+{% block problemset %}
+    <div class="timerwrap">
+    </div>
+{% endblock problemset %}
+{% block report %}
+    {% if showreport %}
+    <div id="reportwrap" class="clearfloats">
+	<p>
+	{% ifequal statvecs.0.2 0 %} <!-- no probs -->
+	  <img src="http://chart.apis.google.com/chart?cht=p3&chd=t:100,0&chs=225x100&chl=&chco=3072F3|FF0000&chf=bg,s,92E095&chs=320x120&chtt=Overall|0+out+of+0+in+0+seconds" alt="View report."/>
+	{% else %}
+	{% ifequal statvecs.0.1 0 %} <!-- 100% correct -->
+	<img src="http://chart.apis.google.com/chart?chf=bg,s,92E095&chxs=0,676767,12.5&chxt=x&chs=320x120&cht=p3&chco=3072F3|FF0000&chd=t:{{statvecs.0.3}},{{statvecs.0.4}}&chdl={{statvecs.0.3}}%25|{{statvecs.0.4}}%25&chl=Correct&chtt=Overall|{{statvecs.0.0}}+out+of+{{statvecs.0.2}}+in+{{statvecs.0.5}}+seconds" width="320" height="120" alt="Statistics" /><br/>
+	{% else %}
+	{% ifequal statvecs.0.0 0 %} <!-- 100% incorrect -->
+	<img src="http://chart.apis.google.com/chart?chf=bg,s,92E095&chxs=0,676767,12.5&chxt=x&chs=320x120&cht=p3&chco=3072F3|FF0000&chd=t:{{statvecs.0.3}},{{statvecs.0.4}}&chdl={{statvecs.0.3}}%25|{{statvecs.0.4}}%25&chl=Incorrect&chtt=Overall|{{statvecs.0.0}}+out+of+{{statvecs.0.2}}+in+{{statvecs.0.5}}+seconds" width="320" height="120" alt="Statistics" /><br/>
+	{% else %} <!-- correct/incorrect -->
+	<img src="http://chart.apis.google.com/chart?chf=bg,s,92E095&chxs=0,676767,12.5&chxt=x&chs=320x120&cht=p3&chco=3072F3|FF0000&chd=t:{{statvecs.0.3}},{{statvecs.0.4}}&chdl={{statvecs.0.3}}%25|{{statvecs.0.4}}%25&chl=Correct|Incorrect&chtt=Overall|{{statvecs.0.0}}+out+of+{{statvecs.0.2}}+in+{{statvecs.0.5}}+seconds" width="320" height="120" alt="Statistics" /><br/>
+	{% endifequal %}
+	{% endifequal %}
+	{% endifequal %}
+	<!--img src="http://chart.apis.google.com/chart?cht=p3&chd=t:{{statvecs.0.3}},{{statvecs.0.4}}&chs=235x100&chl=% Yes|% No&chf=bg,s,92E095" alt="View reprot."/><br/-->
+	<!-- &nbsp;&nbsp;{{statvecs.0.0}}&nbsp;out of&nbsp;{{statvecs.0.2}}&nbsp;&nbsp;&nbsp;in {{statvecs.0.5}} seconds -->
+	</p>
+	{% for stats in statvecs %}
+	{% ifnotequal forloop.counter0 0 %}
+	<p>
+	<!--img src="http://chart.apis.google.com/chart?cht=p3&chd=t:{{stats.3}},{{stats.4}}&chs=235x100&chl=% Yes|% No&chf=bg,s,92E095" alt="View reprot."/-->
+	<img src="http://chart.apis.google.com/chart?chf=bg,s,92E095&chxl=0:|Yes|No|1:|{{stats.2}}&chxp=1,5&chxr=0,0,0|1,0,5&chxs=0,676767,11.5,0,_,676767&chxt=x,y&chbh=23,0,13&chs=140x225&cht=bvg&chco=3072F3|FF0000&chds=0,{{stats.2}}&chd=t:{{stats.0}},{{stats.1}}&chma=20,0,0,5|10&chm=N,000000,0,-1,11&chtt=Page{{forloop.counter0}}+{{stats.6}}|({{stats.5}}+seconds)&chts=000000,14" width="140" height="225" alt="Statistics" /><br/>
+	<!--img src="http://chart.apis.google.com/chart?chf=bg,s,92E095&chxs=0,676767,12.5&chxt=x&chs=320x120&cht=p3&chco=3072F3|FF0000&chd=t:{{stats.3}},{{stats.4}}&chdl={{stats.3}}%25|{{stats.4}}%25&chl=Correct|Incorrect&chtt=Page" width="320" height="120" alt="Statistics" /><br/-->
+	<!--	&nbsp;&nbsp;{{stats.0}}&nbsp;out of&nbsp;{{stats.2}}&nbsp;&nbsp;&nbsp;in {{stats.5}} seconds -->
+	</p>
+	{% endifnotequal %}
+	{% endfor %}
+    </div>
+    {% endif %}
+{% endblock report %}
+{% block keypad %}
+    {% if not showreport %}
+<div id="keypad" {% ifequal viewmode 'vertical' %}class="keypadv clearfloats"{% else %} class="keypadh clearfloats"{% endifequal %} style="display:none;">
+	<span id="key0">0</span>
+	<span id="key1">1</span>
+	<span id="key2">2</span>
+	<span id="key3">3</span>
+	<span id="key4">4</span>
+	<span id="key5">5</span>
+	<span id="key6">6</span>
+	<span id="key7">7</span>
+	<span id="key8">8</span>
+	<span id="key9">9</span>
+	<span id="keym">-</span>
+	<span id="keyb">Back</span>
+	<span id="keyn">Next</span>
+	<span id="keyp">Prev</span>
+</div><!-- keypad -->
+{% endif %}
+{% endblock keypad %}
+{% block panels %}
+<div id="displayhelp" class="paneldisplay" style="display:none;">
+<div class="panelcontent" style="display:none;">
+  <div class="subpanel" id="keyusage">
+	  <p>Keyboard Usage</p>
+      <div>
+	    	<p>Press <em>ENTER</em> to go to Next problem.</p>
+      		<p>Press <em>TAB</em> to go to Next problem.</p>
+	      	<p>Press <em>SHIFT</em>+<em>TAB</em> to go to Previous problem.</p>
+      </div>
+  </div><!-- subpanel -->
+  <div class="subpanel" id="buttonusage">
+	  <p>Button Usage</p>
+      <div>
+	      <p>Click <em>Clear</em> once to reset answers, click again to start over.</p>
+	      <p>Click <em>New</em> to get a new problem set and add the current one to your report.</p>
+	      <p>Click <em>Check</em> to see if your answers are correct.</p>
+      </div>
+  </div><!-- subpanel -->
+  <div class="subpanel">
+	  <p>Session Controls</p>
+      <div>
+	      <p><em>Logout</em> will log you out and email you a report including the practice problems.</p>
+	      <p><em>Report</em> will display your problem set history.</p>
+	      <p><em>Clear Report</em> will permanently delete your problem set history.</p>
+      </div>
+  </div><!-- subpanel -->
+</div><!-- panelcontent -->
+</div><!-- displayhelp -->
+<div id="helptip" class="paneltip" style="display:none;">
+	<p>H</p><p>e</p><p>l</p><p>p</p>
+</div>
+<div id="displayconfig" class="paneldisplay" style="display:none;">
+<div class="panelcontent" style="display:none;">
+  <div class="subpanel">
+	  <p>Problem Set</p>
+    <div id="sizemode"> 
+Problems per page:
+    	<select>
+  	    <option value="5" {% ifequal sizemode '5' %}selected="selected"{% endifequal %}>5</option>
+  	    <option value="10" {% ifequal sizemode '10' %}selected="selected"{% endifequal %}>10</option>
+    	</select>
+    </div>
+    <div id="opmode"> 
+	    <input type="radio" name="opmode1" {% ifequal opmode 'addsub' %}checked="checked"{% endifequal %} value="addsub" />Add/Subtract<br/>
+	    <input type="radio" name="opmode1" {% ifequal opmode 'muldiv' %}checked="checked"{% endifequal %} value="muldiv" />Multiply/Divide<br/> 
+	    <input type="radio" name="opmode1" {% ifequal opmode 'timestables' %}checked="checked"{% endifequal %} value="timestables" />Times Tables<br/>
+    	Times Value:
+	<select>
+	<option value="minmax" {% ifequal timesmode 'minmax' %}selected="selected"{% endifequal %}>Min/Max</option>
+	{% for val in timesopts %}
+	<option value="{{val}}" {% ifequal timesmode val %}selected="selected"{% endifequal %}>{{val}}</option>
+	{% endfor %}
+	</select><br/>
+	    <input type="radio" name="opmode1" {% ifequal opmode 'exponents' %}checked="checked"{% endifequal %} value="exponents" />Exponents<br/>
+    	Exponent Base:
+	<select>
+	<option value="minmax" {% ifequal expmode 'minmax' %}selected="selected"{% endifequal %}>Min/Max</option>
+	{% for val in expopts %}
+	<option value="{{val}}" {% ifequal expmode val %}selected="selected"{% endifequal %}>{{val}}</option>
+	{% endfor %}
+	</select><br/>
+    </div>
+    <div id="rangemode"> 
+    	Max Values:
+	<select>
+	{% for val in rangeopts %}
+	<option value="{{val}}" {% ifequal rangemode.0 val %}selected="selected"{% endifequal %}>{{val}}</option>
+	{% endfor %}
+</select><br/><br/>
+    	Min Values:
+	<select>
+	<option value="off" {% ifequal rangemode.1 'off' %}selected="selected"{% endifequal %}>Off</option>
+	<option value="0" {% ifequal rangemode.1 '0' %}selected="selected"{% endifequal %}>0</option>
+	{% for val in rangeopts %}
+	<option value="{{val}}" {% ifequal rangemode.1 val %}selected="selected"{% endifequal %}>-{{val}}</option>
+	{% endfor %}
+	</select>
+    </div>
+  </div><!-- subpanel -->
+  <div class="subpanel">
+	  <p>SubPanel2</p>
+  </div><!-- subpanel -->
+  <div class="subpanel">
+	  <p>Report</p>
+    <div id="reportmode"> 
+	    <input type="checkbox" name="reportmode1" {% ifequal reportmode.0 'practice' %}checked="checked"{% endifequal %} value="practice" />Practice<br/>
+	    <input type="checkbox" name="reportmode1" {% ifequal reportmode.1 'answers' %}checked="checked"{% endifequal %} value="answers" />Answers<br/>
+	<input type="checkbox" name="reportmode1" {% ifequal reportmode.2 'statistics' %}checked="checked"{% endifequal %} value="statistics" />Statistics 
+    </div>
+  </div><!-- subpanel -->
+</div><!-- panelcontent -->
+</div><!-- displayconfig -->
+<div id="configtip" class="paneltip" style="display:none;">
+	<p>O</p><p>p</p><p>t</p><p>i</p><p>o</p><p>n</p><p>s</p>
+</div>
+<div id="displayresources" class="paneldisplay" style="display:none;">
+<div class="panelcontent" style="display:none;">
+  <div class="subpanel" id="resource1">
+	  <p>Web Practice</p>
+      <div>
+	  <p>Coming Soon.</p>
+      </div>
+  </div><!-- subpanel -->
+  <div class="subpanel" id="resource2">
+	  <p>Tutorials</p>
+      <div>
+	      <p>Coming Soon.</p>
+      </div>
+  </div><!-- subpanel -->
+  <div class="subpanel">
+	  <p>Lessons</p>
+      <div>
+	      <p>Coming Soon.</p>
+      </div>
+  </div><!-- subpanel -->
+</div><!-- panelcontent -->
+</div><!-- displayresources -->
+<div id="resourcestip" class="paneltip" style="display:none;">
+	<p>R</p><p>e</p><p>s</p><p>o</p><p>u</p><p>r</p><p>c</p><p>e</p><p>s</p>
+</div>
+{% endblock panels %}
+{% block controls %}
+  <div id="controls">
+   <div id="panelctrlwrap" class="clearfloats">
+    <div class="panelctrl" id="panelconfig" style="display:none;" title="Click to open/close Options Panel.">Options</div>
+    <div class="panelctrl" id="panelhelp" style="display:none;" title="Click to open/close Help Panel.">Help</div>
+    <div class="panelctrl" id="panelresources" style="display:none;" title="Click to open/close Resources Panel.">Resources</div>
+   </div><!-- panelctrlwrap -->
+    <div id="modeselectwrap" >
+      <div id="viewmode" class="modeselect">
+	<p>
+	{% ifequal viewmode 'vertical' %}
+	<span class="modeoff"><input type="radio" name="viewmode" value="horizontal" /></span>
+	<span class="modeon" style="display:none;"><input type="radio" name="viewmode" checked="checked" value="vertical" /></span>
+	<span class="modetext">Side View&nbsp;<small><i>(on)</i></small></span>
+	{% else %}
+	<span class="modeon"><input type="radio" name="viewmode" value="vertical" /></span>
+	<span class="modeoff" style="display:none;"><input type="radio" name="viewmode" checked="checked" value="horizontal" /></span>
+	<span class="modetext">Side View&nbsp;<small><i>(off)</i></small></span>
+	{% endifequal %}
+	</p>
+      </div><!-- viewmode -->
+      <div id="viewtip" class="tooltip">
+	  <img src="../images/sideview_tt.png" alt="View problems vertically"/>
+	  <p>View the problem set vertically.</p>
+      </div>
+      <div style="display:none;" id="runmode" class="modeselect">
+	<p>
+	{% ifequal runmode 'all' %}
+	<span class="modeon"><input type="radio" name="runmode" value="single" /></span>
+	<span class="modeoff" style="display:none;"><input type="radio" name="runmode" checked="checked" value="all" /></span>
+	<span class="modetext">One at-a-time&nbsp;<small><i>(off)</i></small></span>
+	{% else %}
+	<span class="modeoff"><input type="radio" name="runmode" value="all" /></span>
+	<span class="modeon" style="display:none;"><input type="radio" name="runmode" checked="checked" value="single" /></span>
+	<span class="modetext">One at-a-time&nbsp;<small><i>(on)</i></small></span>
+	{% endifequal %}
+	</p> 
+      </div><!-- runmode -->
+      <div id="runtip" class="tooltip">
+	  <img src="../images/oneatatime_tt.png" alt="View single problem."/>
+	  <p>View one problem at a time.</p>
+      </div>
+      <div style="display:none;" id="padmode" class="modeselect">
+	<p>
+	{% ifequal padmode 'off' %}
+	<span class="modeoff" style="display:none;"><input type="radio" name="padmode" checked="checked" value="off" /></span>
+	<span class="modeon"><input type="radio" name="padmode" value="on" /></span>
+	<span class="modetext">Screen Keypad&nbsp;<small><i>(off)</i></small></span>
+	{% else %}
+	<span class="modeon" style="display:none;"><input type="radio" name="padmode" checked="checked" value="on" /></span>
+	<span class="modeoff"><input type="radio" name="padmode" value="off" /></span>
+	<span class="modetext">Screen Keypad&nbsp;<small><i>(on)</i></small></span>
+	{% endifequal %}
+	</p>
+      </div><!-- padmode -->
+      <div id="padtip" class="tooltip">
+	  <img src="../images/keypad_tt.png" alt="View virtual keypad."/>
+	  <p>Use the virtual key pad.</p>
+      </div>
+      <div style="display:none;" id="timermode" class="modeselect">
+	<p>
+	{% ifequal timermode 'on' %}
+	<span class="modeon" style="display:none;"><input type="radio" name="timermode" checked="checked" value="on" /></span>
+	<span class="modeoff"><input type="radio" name="timermode" value="off" /></span>
+	<span class="modetext">Timer&nbsp;<small><i>(on)</i></small></span>
+	{% else %}
+	<span class="modeoff" style="display:none;"><input type="radio" name="timermode" checked="checked" value="off" /></span>
+	<span class="modeon"><input type="radio" name="timermode" value="on" /></span>
+	<span class="modetext">Timer&nbsp;<small><i>(off)</i></small></span>
+	{% endifequal %}
+	</p>
+      </div><!-- viewmode -->
+    </div><!-- modeselectwrap -->
+    <div id="statswrap">
+    <div id="submitwrap" title="Check, Clear, or get a new problem set.">
+        {% if showreport %}
+    <input disabled="disabled" name="submit" type="submit" value="Add Page" title="Get a new problem set and add the current one to your report.">
+    <input disabled="disabled" name="submit" type="submit" value="Clear Page" title="Click to clear the answer fields, click again to start over.">
+    <input disabled="disabled" name="submit" type="submit" value="Check Answers" title="Check your progress.">
+	{% else %}
+	<span>
+    <input name="submit" type="submit" value="Add Page" title="Get a new problem set and add the current one to your report.">
+    {% if showcheck %}
+    <input name="submit" type="submit" value="Clear Mistakes" title="Click to clear the answer fields, click again to start over.">
+    {% else %}
+    <input name="submit" type="submit" value="Clear Page      " title="Click to clear the answer fields, click again to start over.">
+    {% endif %}
+    <input name="submit" type="submit" value="Check Answers" title="Check your progress.">
+	</span>
+    {% endif %}
+    {% if showcheck %}
+    <p id="statistics">{{statvecs.0.0}}&nbsp;out of&nbsp;{{statvecs.0.2}} Correct</p>
+    {% else %}
+    <p id="statistics">&nbsp;Out of&nbsp;{{statvecs.0.2}}</p>
+    {% endif %}
+    <p id="pagecount">
+	Pages&nbsp;&nbsp;&nbsp;
+	{% for stats in statvecs %}
+	{% if not forloop.first %}
+        {% if showreport %}
+	<span>{{forloop.counter0}}</span>
+	{% else %}
+	{% ifnotequal key stats.7 %}
+	<a id="getpage{{forloop.counter0}}" class="getpage" title="Go to Page" href="/page?pagekey={{stats.7}}">{{forloop.counter0}}</a>
+	{% else %}
+	<span>{{forloop.counter0}}</span>
+	{% endifnotequal %}
+	{% endif %}
+	{% endif %}
+	{% endfor %}
+	</p>
+    </div>
+    </div><!-- statswrap -->
+	    <div id="status" style="display:none;">status{{status}}</div>
+    	</div><!-- controls -->
+	  <div><input name="timervalue" type="text" size="1" value="{{timervalue}}" style="display:none"></div>
+	  <div><input name="key" type="text" size="1" value="{{key}}" style="display:none"></div>
+	</form>
+      </div><!-- problemset -->
+{% endblock controls %}
+{% block record %}
+      <div id="record">
+      {% if showreport %}
+      <div id="recordWrap">
+	      <div id="recordopts">
+      <a class="" title="Close report." href="/close">Close</a>
+      {% ifequal printable 'true' %}
+      <a class="" title="Print report." href="/print">Print Report</a>
+      {% else %}
+      <a class="" title="View printable report." href="/printpreview">Print Preview</a>
+      {% endifequal %}
+	      </div>
+	<p>
+	{{author}}{% ifequal reportmode.2 'statistics' %}&nbsp;&nbsp;{{statvecs.0.0}}&nbsp;out of&nbsp;{{statvecs.0.2}}&nbsp;&nbsp;&nbsp;in {{statvecs.0.5}} seconds {% endifequal %}
+	</p>
+	  <div class="records">
+	  <table>
+	  <tr>
+		  {% ifequal reportmode.1 'answers' %}<th>&nbsp;Answer Key</th>{% endifequal %}{% ifequal reportmode.0 'practice' %}<th>&nbsp;Practice</th>{% endifequal %}
+	  </tr>
+	{% for problemvector in probvecs %}
+	  {% for problem in problemvector %}
+	  <tr>
+{% ifequal problem.1 '^' %}
+		  {% ifequal reportmode.1 'answers' %}<td>{{problem.6}})&nbsp;&nbsp;{{problem.2}}&nbsp;{{problem.1}}&nbsp;({{problem.0}})&nbsp;=&nbsp;{{problem.3}}&nbsp;&nbsp;({{problem.4}})</td>{% endifequal %}{% ifequal reportmode.0 'practice' %}<td>&nbsp;&nbsp;{{problem.2}}&nbsp;{{problem.1}}&nbsp;({{problem.0}})&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;</td>{% endifequal %}
+{% else %}
+		  {% ifequal reportmode.1 'answers' %}<td>{{problem.6}})&nbsp;&nbsp;{{problem.0}}&nbsp;{{problem.1}}&nbsp;({{problem.2}})&nbsp;=&nbsp;{{problem.3}}&nbsp;&nbsp;({{problem.4}})</td>{% endifequal %}{% ifequal reportmode.0 'practice' %}<td>&nbsp;&nbsp;{{problem.0}}&nbsp;{{problem.1}}&nbsp;({{problem.2}})&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;</td>{% endifequal %}
+{% endifequal %}
+	  </tr>
+	  {% endfor %}
+	{% endfor %}
+	  </table>
+ 	  </div><!-- .records -->
+      </div><!-- recordWrap -->
+      {% endif %}
+      </div><!-- record -->
+{% endblock record %}
+    </div><!-- wrap -->
+
+<p>{{info}}</p>
+{% block overlay %}
+<!--a id="getoverlay" rel="#overlay">Report</a>
+<div id="overlay"><div class="contentWrap" id="recordover"></div></div-->
+{% endblock overlay %}
+</body>
+</html>

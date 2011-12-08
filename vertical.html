@@ -1,0 +1,43 @@
+{% extends "index.html" %}
+{% block problemset %}
+{% if not showreport %}
+<div style="display:none;" class="timerwrap" id="timerv">
+    </div>
+	<div id="verticalwrap" class="psetwrap">
+	{% for problem in problems %}
+	<div class="line clearfloats">
+	  <div class="prob {{problem.5}}">
+	    <div class="probindex">{{problem.6}})&nbsp;</div>
+	    {% ifequal problem.1 '^' %}
+	    <div class="value1">{{problem.2}}</div>
+	    <div class="operation">{{problem.1}}</div>
+	    <div class="value2">({{problem.0}})</div>
+	    {% else %}
+	    <div class="value1">{{problem.0}}</div>
+	    <div class="operation">{{problem.1}}</div>
+	    <div class="value2">( {{problem.2}})</div>
+	    {% endifequal %}
+	    <div class="equals">=</div>
+	    <div class="expected" style="display:none">{{problem.3}}</div>
+	    {% ifequal problem.5 'yes' %}
+	    <div class="answer"><input name="answer{{problem.6}}" type="text" size="2" value="{{problem.4}}" class="correct"></div>
+	    <!--div class="correct">{{problem.4}}</div-->
+	    {% endifequal %}
+	    {% ifequal problem.5 'empty' %}
+	    <div class="answer"><input name="answer{{problem.6}}" type="text" size="2" value="{{problem.4}}"></div>
+	    {% endifequal %}
+	    {% ifequal problem.5 'no' %}
+	    <div class="answer"><input class="incorrect" name="answer{{problem.6}}" type="text" size="2" value="{{problem.4}}"></div>
+	    {% endifequal %}
+	    {% ifequal problem.5 'filled' %}
+	    <div class="answer"><input class="filled" name="answer{{problem.6}}" type="text" size="2" value="{{problem.4}}"></div>
+	    {% endifequal %}
+	    {% ifequal problem.5 'noint' %}
+	    <div class="answer"><input class="noint" name="answer{{problem.6}}" type="text" size="2" value=""></div>
+	    {% endifequal %}
+  	  </div><!-- prob -->
+  	</div><!-- line -->
+	{% endfor %}
+  	</div><!-- verticalwrap -->
+{% endif %}
+{% endblock problemset %}
