@@ -40,13 +40,8 @@
  }
 
 
-/*
- * 
- * Sets class for current problem state(since no ajax update).
- * Used with TAB and ENTER form traversing
- * 
- */
-
+ // Used with TAB and ENTER form traversing
+ // Sets class for current problem state(since no ajax update).
  App.updateProbClass = function () {
     $('form div.prob').each(function(index) {
 
@@ -65,16 +60,20 @@
     });
  }
 
+ //Force answer inputs to size=1
  App.prepInputSize = function () {
     $('div.prob input').attr('size', '1');
  }
 
+ //Show modeselect divs if js enabled.
+ //Distinguish 'off' condition with grayed out text
+ //Hide radio btns when report visible to disable control but leave text
  App.prepModeselect = function () {
 
-    var $modesel = $('div.modeselect');
-    var noreport = $('#reportwrap').length == 0;
+    var modesel  = $('div.modeselect'),
+        noreport = $('#reportwrap').length == 0;
 
-    $modesel.each(function() {
+    modesel.each(function() {
 	$(this).show().find('input').each(function() {
 
 	    var $inp    = $(this),
@@ -97,21 +96,23 @@
 
  }
 
+ //Show panelctrl divs if js enabled.
+ //Animate paneltips on mouseover/mouseout of panelctrl divs
  App.prepPanelctrl = function () {
 
-    var $pctrl = $('div.panelctrl');
-    var $panel = $('div.paneldisplay');
+    var pctrl = $('div.panelctrl'),
+        panel = $('div.paneldisplay');
 
-    $pctrl.show();
+    pctrl.show();
 
-    $pctrl.mouseover(function($e) {
+    pctrl.mouseover(function($e) {
 	var pid = $(this).attr('id').substr(5); //strip 'panel' from id to get specific panel
-  	if ( !$panel.is(':visible') ){
+  	if ( !panel.is(':visible') ){
 	    $('#'+pid+'tip').animate({width: 'toggle' }, 500); //animate panel tip
     	}
     });
 
-    $pctrl.mouseout(function($e) {
+    pctrl.mouseout(function($e) {
 	var pid = $(this).attr('id').substr(5); //strip 'panel' from id to get specific panel
 	if( $('#'+pid+'tip').is(':visible') ) {
 	    $('#'+pid+'tip').animate({width: 'toggle' }, 500);
@@ -121,126 +122,122 @@
  }
 
   App.prepPaneldisplay = function () {
-    var padmode = App.getPadmode();
-    var timermode = App.getTimermode();
-    $('#controls div.panelctrl').live('click',function($e) {
 
+    $('div.panelctrl').live('click',function($e) {
 
-	$('.panelcontent').hide();
-	$('div#keypad').hide();
+	var pnlid  = $(this).attr('id'),
+	    pset   = $('div.psetwrap'), //either horizontal or vertical
+	    report = $('div#reportwrap');
+
+	// Hide previously open panels, keypad, timer, paneltips 
+	// before showing new panel.
+	// showProblemdisplay() will take care of showing them again.
+	$('div.panelcontent').hide(); 
+	$('div#keypad').hide(); 
 	$('div.timerwrap').hide();
+ 	$('div.paneltip').hide();
 
- 	$('div.paneltip').each(function() {
-	    if( $(this).is(':visible') ) {
-		openid =$(this).attr('id');
- 		$('#'+openid).hide();
-			/*
- 		$('#'+openid).animate({
-    	    		width: 'toggle' }, 
-			0 
-  		);
-		*/
-	    }
-  	});
-
-	thisid = $(this).attr('id');
-	if($('.psetwrap').length != 0) {
-	    if( $('.psetwrap').is(':visible') ) {
-  	    	$('.psetwrap').slideUp(
-    	    		300,
-			function() {
-				App.togglePanels(thisid);
-  	    	});
-	    } else {
-				App.togglePanels(thisid);
-	    }
-	} else if($('#reportwrap').length != 0) {
-	    if( $('#reportwrap').is(':visible') ) {
-  	        $('#reportwrap').slideUp(
-    	    		300,
-			function() {
-				App.togglePanels(thisid);
+	// If report is open hide w/animation.
+	// Otherwise hide problem set w/animation.
+	// If they are already hidden just toggle panel.
+	if(report.length != 0) {
+	    if( report.is(':visible') ) {
+  	        report.slideUp(300, function() {
+				togglePanels(pnlid);
 
   	        });
-	    } else {
-				App.togglePanels(thisid);
+	    } else { //report already hidden
+				togglePanels(pnlid);
 	    }
+	} else { //psetwrap div always present so must check after reportwrap
+	    if( pset.is(':visible') ) {
+  	    	pset.slideUp(300, function() {//'single' mode doesnt slide due to floated element
+				togglePanels(pnlid);
+  	    	});
+	    } else { //problem set already hidden
+				togglePanels(pnlid);
+	    }
+	    
 	}
     });
- }
 
 
- App.togglePanels = function (id) {
-   var done = 'true';
-    $('#controls div.panelctrl').each(function($e) {
-    	if(id == $(this).attr('id')) {
-    	    if($('#'+id).hasClass('displayopen') ) {
-    	    	$('#'+id).removeClass('displayopen'); 
-    	    } else {
-    	    	$('#'+id).addClass('displayopen'); 
-    	    }
-	} else {
-    	    if($(this).hasClass('displayopen') ) {
-		done= $(this).attr('id');
-    		$(this).removeClass('displayopen'); 
+    function togglePanels(id) {
+
+    	var thispnl    = $('#'+id), // clicked panelctrl
+            pnldisplay = $('#display'+id.substr(5)), // strip 'panel'
+            pnlcontent = $('#content'+id.substr(5)),
+            pnlctrl    = $('div.panelctrl'), // all panelctrl
+            otherpnl; // use to check for other open panel
+
+
+    	// Toggle class for clicked panel.
+    	// Open or close depending on present state.
+    	if(thispnl.hasClass('displayopen') ) {
+	    thispnl.removeClass('displayopen'); 
+    	} else {
+	    thispnl.addClass('displayopen'); 
+    	}
+
+    	// Check for other panel(not clicked) being open. 
+    	// If update class and set otherpnl to animate hide (below).
+    	pnlctrl.not('#'+id).each(function() { //dont use thispnl because it is a jquery object
+	    var $pnl = $(this);
+	    if($pnl.hasClass('displayopen') ) {
+	    	$pnl.removeClass('displayopen'); 
+	    	otherpnl = $pnl.attr('id');
 	    }
-	}
+    	});
 
-    });
 
-    if (done == 'true') {
-  	$('#display'+id.substr(5)).animate({
+    	// animate panel open/close based on current state,
+    	// then show content or show problems/report.
+    	if (otherpnl == undefined) {
+  	    pnldisplay.animate({
     	    		width: 'toggle' }, 
 			1000, 
     			'easeOutBounce',
 			function() {
-				$('.panelcontent').show();
-				$('.paneltip').hide();
-				App.showProblemdisplay();
-  	});
-    } else {
-  	$('#display'+done.substr(5)).animate({
+				if (!thispnl.hasClass('displayopen')) {
+				    showProblemdisplay(); //closing so get problems/report
+				} else {
+				    pnlcontent.show(); //opening so show content
+				}
+  	    });
+    	} else {
+  	    $('#display'+otherpnl.substr(5)).animate({
     	    		width: 'toggle' }, 
 			1000, 
     			'easeOutBounce',
 			function() {
-  			    $('#display'+id.substr(5)).animate({
+  			    pnldisplay.animate({
     	    				width: 'toggle' }, 
 					1000, 
     					'easeOutBounce',
 					function() {
-					    $('.panelcontent').show();
-					    $('.paneltip').hide();
-					    App.showProblemdisplay();
+					    if (!thispnl.hasClass('displayopen')) {
+					    	showProblemdisplay(); //closing
+					    } else {
+					    	pnlcontent.show(); //opening so show content
+					    }
   			    });
-  	});
-    }
- }
-
- App.showProblemdisplay = function () {
-    var padmode = App.getPadmode();
-    var timermode = App.getTimermode();
-    var done = 'true';
-    $('#controls div.panelctrl').each(function($e) {
-    	if($(this).hasClass('displayopen') ) {
-	    done = 'false';
-	}
-    });
-    if (done == 'true') {
+  	    });
+    	}
+     } //togglePanels
 
 
-    	if($('.psetwrap').length != 0) {
-  	    $('.psetwrap').slideDown( 300, function(){
-			    	if(padmode == 'on') {
-			    	    $('div#keypad').show();
-				}
-			    	if(timermode == 'on') {
-			    	    $('div.timerwrap').show();
-			    	}
-		    		App.findFocus('get')
-	    });
-	} else if($('#reportwrap').length != 0) {
-  	    $('#reportwrap').slideDown( 300, function(){
+     // If panels closing show problemset/report w/animation and show appropriate modes
+     function showProblemdisplay () {
+
+
+    	var report    = $('div#reportwrap'),
+	    pset      = $('div.psetwrap'), //either horizontal or vertical
+            padmode   = App.getPadmode(),
+            timermode = App.getTimermode();
+
+
+    	if(report.length != 0) {
+  	    report.slideDown( 300, function(){
 			    	if(padmode == 'on') {
 			    	    $('div#keypad').show();
 			    	}
@@ -249,9 +246,21 @@
 			    	}
 	 			App.findFocus('get')
 	    });
+    	} else { //psetwrap div always present so must check after reportwrap
+  	    pset.slideDown( 300, function(){
+			    	if(padmode == 'on') {
+			    	    $('div#keypad').show();
+				}
+			    	if(timermode == 'on') {
+			    	    $('div.timerwrap').show();
+			    	}
+		    		App.findFocus('get')
+	    });
     	}
-    }
- }
+     }//showProblemdisplay
+
+ }//prepPaneldisplay
+
 
  App.prepOptionCookies = function () {
 
@@ -683,17 +692,13 @@
  }
 
 
+ //jquerytools tooltips, replaces native title box on hover
  App.registerTips = function () {
-	 /*
-    $('#submitwrap').tooltip({
-		position: 'bottom center', 
-		tipClass: 'titletip3'
-    });
-    */
 
     $(".modeselect").not('#timermode').each(function() { 
-    	if($(this).find('span.modeon').is(':visible')) {
-	    $(this).tooltip({
+	var $mode = $(this);
+    	if($mode.find('span.modeon').is(':visible')) { //only display if off
+	    $mode.tooltip({
 			  position: 'top right', 
 			  predelay: 800,
 			  relative: true,
@@ -702,28 +707,28 @@
 	}
     });
 
-    $('#sessionctrl a#getrecords').tooltip({
+    $('a#getrecords').tooltip({
 		position: 'bottom center', 
 		predelay: 500,
 		offset:[5, 0]
 		//tipClass: 'titletip2'
     });
 
-    $('#sessionctrl a#getproblemset').tooltip({
+    $('a#getproblemset').tooltip({
 		position: 'bottom center', 
 		predelay: 1000,
 		offset:[5, 0],
 		tipClass: 'titletip2'
     });
 
-    $('#sessionctrl a#alogout').tooltip({
+    $('a#alogout').tooltip({
 		position: 'bottom left', 
 		predelay: 300,
 		offset:[5, 10],
 		tipClass: 'titletip2'
     });
 
-    $('#sessionctrl a#clearrecords').tooltip({
+    $('a#clearrecords').tooltip({
 		position: 'bottom right', 
 		predelay: 300,
 		offset:[5, -10],
@@ -732,7 +737,7 @@
 
  }
 
- App.getRunmode = function () {
+ App.getRunmode = function () { // problemset show 'all' or 'single'
     var runmode = $('div#runmode input[checked=true]').val() ||
      			$('div#runmode input[checked=checked]').val();
 
@@ -741,7 +746,7 @@
     return runmode;
  }
 
- App.getPadmode = function () {
+ App.getPadmode = function () { // keypad 'on' or 'off'
     var padmode = $('div#padmode input[checked=true]').val() ||
      			$('div#padmode input[checked=checked]').val();
 
@@ -750,7 +755,7 @@
     return padmode;
  }
 
- App.getViewmode = function () {
+ App.getViewmode = function () { // problemset view 'vertical' or 'horizontal'
     var viewmode = $('div#viewmode input[checked=true]').val() ||
      			$('div#viewmode input[checked=checked]').val();
 
@@ -759,7 +764,7 @@
     return viewmode;
  }
 
- App.getTimermode = function () {
+ App.getTimermode = function () { // timer 'on' or 'off'
     var timermode = $('div#timermode input[checked=true]').val() ||
      			$('div#timermode input[checked=checked]').val();
 
