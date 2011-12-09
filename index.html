@@ -6,22 +6,13 @@
     <meta name="description" content="Generate math assignments online.  Practice math assignments online." />
     <meta name="keywords" content="Arithmetic practice, Signed integer math, Exponents, Percents, Multiplication, Division, Addition, Subtraction" />
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
-    <script type="text/javascript"
-     src="http://cdn.jquerytools.org/1.2.1/full/jquery.tools.min.js"></script>
-    <!--script 
-      src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
-    </script-->
-    <script type="text/javascript" 
-	    		src="/javascript/jquery.colors.js"></script>
-    <script type="text/javascript" 
-	    		src="/javascript/jquery.easing.1.3.js"></script>
-    <script type="text/javascript" src="/javascript/ajax.js"></script>
 {% block stylesheet %}
     <style type="text/css">
     </style>
 {% endblock stylesheet %}
   </head>
   <body>
+    <div id="content">
     <div id="wrap">
 {% block logos %}
 <!--img src="../images/Minus.jpg" alt="Minus Symbol as logo"  class="imgfltleft"/>
@@ -48,9 +39,11 @@
 	  <p>See your summary report.</p>
       </div>
 	{% else %}
-	<a id="getproblemset" rel="" class="control" title="View problem set." href="/">Problems</a>
+	<a id="getproblemset" rel="" class="control" href="/">Problems</a>
+	<div class="titletip2">View problem set.</div>
 	{% endif %}
-	<a id="clearrecords" class="control" title="Clear problem set history" href="/clear">Start Again</a>
+	<a id="clearrecords" class="control"  href="/clear">Start Again</a>
+	<div class="titletip2">Clear Problem set history.</div>
       </div>
 	<form id="answerform" action="/check" method="post">
 {% endblock sessionctrl %}
@@ -113,7 +106,7 @@
 {% endblock keypad %}
 {% block panels %}
 <div id="displayhelp" class="paneldisplay" style="display:none;">
-<div class="panelcontent" style="display:none;">
+<div id="contenthelp" class="panelcontent" style="display:none;">
   <div class="subpanel" id="keyusage">
 	  <p>Keyboard Usage</p>
       <div>
@@ -144,7 +137,7 @@
 	<p>H</p><p>e</p><p>l</p><p>p</p>
 </div>
 <div id="displayconfig" class="paneldisplay" style="display:none;">
-<div class="panelcontent" style="display:none;">
+<div id="contentconfig" class="panelcontent" style="display:none;">
   <div class="subpanel">
 	  <p>Problem Set</p>
     <div id="sizemode"> 
@@ -208,7 +201,7 @@ Problems per page:
 	<p>O</p><p>p</p><p>t</p><p>i</p><p>o</p><p>n</p><p>s</p>
 </div>
 <div id="displayresources" class="paneldisplay" style="display:none;">
-<div class="panelcontent" style="display:none;">
+<div id="contentresources" class="panelcontent" style="display:none;">
   <div class="subpanel" id="resource1">
 	  <p>Web Practice</p>
       <div>
@@ -391,11 +384,20 @@ Problems per page:
       </div><!-- record -->
 {% endblock record %}
     </div><!-- wrap -->
+    </div><!-- content -->
 
 <p>{{info}}</p>
-{% block overlay %}
-<!--a id="getoverlay" rel="#overlay">Report</a>
-<div id="overlay"><div class="contentWrap" id="recordover"></div></div-->
-{% endblock overlay %}
+    <script type="text/javascript"
+     src="http://cdn.jquerytools.org/1.2.1/full/jquery.tools.min.js"></script>
+    <!--script 
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
+    </script-->
+    <!--script type="text/javascript"
+      src="http://code.jquery.com/jquery-1.7.min.js"></script-->
+    <script type="text/javascript" 
+	    		src="/javascript/jquery.colors.js"></script>
+    <script type="text/javascript" 
+	    		src="/javascript/jquery.easing.1.3.js"></script>
+    <script type="text/javascript" src="/javascript/ajax.js"></script>
 </body>
 </html>
