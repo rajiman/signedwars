@@ -1,44 +1,11 @@
  var App = {};
 
 
- App.callPreps = function  () { //non-event based
-    App.prepPanelctrl(); //show div#panelctrl
-    App.prepInputSize(); //reduce input size
-    App.prepModeselect(); //show unselected state
-    App.registerTips(); //tip handlers need rebinding every update
-    App.checkKeypadmode(); //show/hide
-    App.checkTimermode(); //show/hide
- }
-
-
- document.onkeydown = function (event) {
-
-    var code;
-    var e;
-    if (document.all) {
-	if (!event) {
-            var e = window.event;
-            code = e.keyCode;
-	}
-    } else if (event.which) {
-    	code = event.which;
-    	e = event;
-    }
-
-    var runmode = App.getRunmode();
-
-    if (((code == 13) || (code == 9)) && !e.shiftKey) {//ENTER || TAB
-    	if ((runmode == 'all') && (code == 9)) {//TAB - use native
-	    App.startTimer();
-	} else {
-	    App.updateProbClass();
-	    App.findFocus('key');
-	    return false;
-	}
-    }
-
- }
-
+/////////////////////////////////////////////////////////////////////////
+//
+//		Application Functions
+//
+//
 
  // Used with TAB and ENTER form traversing
  // Sets class for current problem state(since no ajax update).
@@ -149,7 +116,7 @@
 	    } else { //report already hidden
 				togglePanels(pnlid);
 	    }
-	} else { //psetwrap div always present so must check after reportwrap
+	} else { //psetwrap div always present so must check reportwrap first
 	    if( pset.is(':visible') ) {
   	    	pset.slideUp(300, function() {//'single' mode doesnt slide due to floated element
 				togglePanels(pnlid);
@@ -246,7 +213,7 @@
 			    	}
 	 			App.findFocus('get')
 	    });
-    	} else { //psetwrap div always present so must check after reportwrap
+    	} else { //psetwrap div always present so must check reportwrap first
   	    pset.slideDown( 300, function(){
 			    	if(padmode == 'on') {
 			    	    $('div#keypad').show();
@@ -265,7 +232,7 @@
  App.prepOptionCookies = function () {
 
 /* IE needs binding to 'click'  for radio,select inputs	*/
-    if ($.browser.msie) {
+    //if ($.browser.msie) {
     	$('#opmode input[type=radio]').live('click', function($e) {
 	    App.setCookie('opmode', this.value, 30, '/');
     	});
@@ -290,6 +257,7 @@
 	    App.setCookie('expmode', this.value, 30, '/');
     	});
      
+	/*
     } else {
     
     	$('#opmode input[type=radio]').live('change', function($e) {
@@ -317,6 +285,7 @@
     	});
 
     }
+    */
 
 
     $("#reportmode input:eq(0)").live('click', function() {
@@ -388,167 +357,118 @@
     if(state === undefined) { state = 'get';}
     if(value === undefined) { value = '0';}
 
-    var runmode = App.getRunmode();
-    var viewmode = App.getViewmode();
-    var timermode = App.getTimermode();
+    var timer     = App.getTimerCurrent(),
+        runmode   = App.getRunmode(),
+        viewmode  = App.getViewmode(),
+        timermode = App.getTimermode();
 
+    var probs  = $('div.prob'),
+        empty  = $('div.prob.empty'),
+	wrong  = $('div.prob.no'),
+	chkans = $('#controls input[value="Check Answers"]');
 
     if (state == 'get') { //records; no new pset
-	if($('form div.prob.empty').length != 0) {
-    	    $('form div.prob.empty').find('input')[0].focus();
-	} else if ($('form div.prob.no').length != 0) {
-    	    $('form div.prob.no').find('input')[0].focus();
+	if(empty.length != 0) {
+    	    empty.eq(0).find('input').focus();
+	} else if (wrong.length != 0) {
+    	    wrong.eq(0).find('input').focus();
 	}
-    } else if (state == 'key') {
+    } else if (state == 'post') { 
+
+	if(timer != 0) { App.startTimer(); }
+
+	if (empty.length != 0) {
+	    if(runmode == 'single') {
+		empty.css({display:'none'});
+		empty.eq(0).css({display:'block'}).addClass('single');
+	    }
+
+	    if($.browser.msie) {
+	    	setTimeout(function(){
+    	    	   empty.eq(0).find('input').focus();
+	    	}, 1000);
+	    } else {
+    	    	empty.eq(0).find('input').focus();
+	    }
+
+	} else if (wrong.length != 0) { //no empties
+	    if($.browser.msie) {
+	    	setTimeout(function(){
+    	            wrong.eq(0).find('input').focus();
+	    	}, 1000);
+	    } else {
+    	    	wrong.eq(0).find('input').focus();
+	    }
+	}
+    } else if (state == 'key') { //keyboard
 	App.startTimer();
-	if(($('form div.prob.empty').length != 0) && (runmode == 'single')) {
-    	    $('form div.prob').removeClass('single');
-    	    $('form div.prob.empty').each(function(index) {
-	    	if(index == 0) {
-    	    	    $(this).addClass('single');
-    	    	    $(this).css({display:'block'});
-    	    	    $('div.prob.empty').find('input')[index].focus();
-	    	}
-    	    });
-	} else if ($('form div.prob.empty').length != 0) { //runmode='all'
-    	    $('form div.prob.empty').find('input')[0].focus();
-	} else if ($('form div.prob.no').length != 0) {
-    	    $('form div.prob.no').find('input')[0].focus();
+	if((empty.length != 0) && (runmode == 'single')) {
+    	    probs.removeClass('single');
+	    empty.eq(0).addClass('single').css({display:'block'}).find('input').focus();
+	} else if (empty.length != 0) { //runmode='all'
+	    empty.eq(0).find('input').focus();
+	} else if (wrong.length != 0) {
+	    wrong.eq(0).find('input').focus();
     	} else  { //no empties
-	    $('#controls input[value="Check Answers"]').trigger('click');
+	    chkans.trigger('click');
 	}
     } else if (state == 'keypad') {
 	App.startTimer();
-	if(value == 'Next') {
-	    var done = 'false';
-	    $('form div.prob').each(function () {
-		if($(this).hasClass('current') && (done=='false')) {
-		    if((viewmode == 'vertical') && (runmode == 'single')) {
-		        if($(this).parent().next().length != 0) {
-    	    	    	    $(this).removeClass('single');
-    	    	    	    $(this).parent().next().find('div.prob').addClass('single');
-    	    	    	    $(this).parent().next().find('div.prob').css({display:'block'});
-	    	    	    $(this).parent().next().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else if(viewmode == 'vertical') {
-		        if($(this).parent().next().length != 0) {
-	    	    	    $(this).parent().next().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else if((viewmode == 'horizontal') && (runmode == 'single')){
-		        if($(this).next().length != 0) {
-    	    	    	    $(this).removeClass('single');
-    	    	    	    $(this).next().addClass('single');
-    	    	    	    $(this).next().css({display:'block'});
-	    	    	    $(this).next().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else {
-		        if($(this).next().length != 0) {
-	    	    	    $(this).next().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    }
-	    	    done = 'true';
+	if(value == 'Next') { //possibly combine Next/Prev.  Use old/new.
+	    var cur = $('form div.prob.current');
+	    if (viewmode == 'vertical') {
+	     	nxt = cur.parent().next().find('div.prob');
+	    } else {
+	     	nxt = cur.next();
+	    }
+	    if(runmode == 'single') {
+		if(nxt.length != 0) {
+    	    	    cur.removeClass('single');
+    	    	    nxt.addClass('single').css({display:'block'}).find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
 		}
-	    });
+	    } else {
+		if(nxt.length != 0) {
+	    	    nxt.find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    }
 	} else if(value == 'Prev') {
-	    var done = 'false';
-	    $('form div.prob').each(function () {
-		if($(this).hasClass('current') && (done=='false')) {
-		    if((viewmode == 'vertical') && (runmode == 'single')) {
-		        if($(this).parent().prev().length != 0) {
-    	    	    	    $(this).removeClass('single');
-    	    	    	    //$(this).css({display:'none'});
-	    	    	    $(this).parent().prev().find('div.prob').addClass('single');
-	    	    	    //$(this).parent().prev().find('div.prob').css({display:"block"});
-	    	    	    $(this).parent().prev().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else if(viewmode == 'vertical') {
-		        if($(this).parent().prev().length != 0) {
-	    	    	    $(this).parent().prev().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else if((viewmode == 'horizontal') && (runmode == 'single')){
-		        if($(this).prev().length != 0) {
-    	    	    	    $(this).removeClass('single');
-    	    	    	    //$(this).css({display:'none'});
-    	    	    	    $(this).prev().addClass('single');
-	    	    	    $(this).prev().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    } else {
-		        if($(this).prev().length != 0) {
-	    	    	    $(this).prev().find('input').focus();
-		        } else {
-	    	    	    $(this).find('input').focus();
-		    	}
-		    }
-	    	    done = 'true';
+	    var cur = $('form div.prob.current');
+	    if (viewmode == 'vertical') {
+	     	prv = cur.parent().prev().find('div.prob');
+	    } else {
+	     	prv = cur.prev();
+	    }
+	    if(runmode == 'single') {
+		if(prv.length != 0) {
+    	    	    cur.removeClass('single');
+    	    	    prv.addClass('single').css({display:'block'}).find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
 		}
-	    });
+	    } else {
+		if(prv.length != 0) {
+	    	    prv.find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    }
 	} else if(value == 'Back') {
-	    oldval = $('form div.prob.current input').val();
-	    newval = oldval.substr(0, oldval.length-1);
-	    $('form div.prob.current input').val(newval);
-	    $('form div.prob.current input').focus();
-	} else {
-	    oldval = $('form div.prob.current input').val();
-	    $('form div.prob.current input').val(oldval+value);
-	    $('form div.prob.current input').focus();
-	}
-    } else if (state == 'post') { 
-	if(($('form div.prob.empty').length != 0) && (runmode == 'single')) {
-	    var timer = App.getTimerCurrent();
-	    if(timer != 0) {
-	    	App.startTimer();
-	    }
-    	    $('form div.prob.empty').each(function(index) {
-	    	if(index != 0) {
-            	    $(this).css({display:'none'})
-	    	} else {
-    	    	    $(this).css({display:'block'})
-    	    	    $(this).addClass('single')
-		    if($.browser.msie) {
-		  	setTimeout(function(){
-    	    	    	$('div.prob.empty').find('input')[index].focus();
-		  	}, 1000);
-		    } else {
-    	    	    	$('div.prob.empty').find('input')[index].focus();
-		    }
-	    	}
-    	    });
+	    var cur    = $('div.prob.current input'),
+	        oldval = cur.val(),
+	        newval = oldval.substr(0, oldval.length-1);
 
-	} else if($('form div.prob.empty').length != 0) { //runmode='all'
-	    var timer = App.getTimerCurrent();
-	    if(timer != 0) {
-	    	App.startTimer();
-	    }
-	    if($.browser.msie) {
-	    	setTimeout(function(){
-    	    	    $('form div.prob.empty').find('input')[0].focus();
-	    	}, 1000);
-	    } else {
-    	    	$('form div.prob.empty').find('input')[0].focus();
-	    }
+	    cur.val(newval).focus();
 
-	} else if ($('form div.prob.no').length != 0) { //no empties
-	    if($.browser.msie) {
-	  	setTimeout(function(){
-    	    	    $('form div.prob.no').find('input')[0].focus();
-	  	}, 1000);
-	    } else {
-    	        $('form div.prob.no').find('input')[0].focus();
-	    }
+	} else { //value = digit or -
+	    var cur    = $('div.prob.current input'),
+	        oldval = cur.val(),
+		newval = oldval+value;
+
+	    cur.val(newval).focus();
 	}
     }
 
@@ -559,14 +479,16 @@
  App.prepControls = function () {
 
 
-/*	Records/Problems, Start Again, Logout			*/
+    // Records/Problems, Start Again, Logout
     $('a.control').live('click',function($e) {
 
 	var action = this.href.split('/').reverse()[0];
 
 	if(action != 'logout') {
+
 	    $e.preventDefault();
 	    App.stopTimer();
+
 	    $.get(this.href, 
 		function(data) {
 		    var content = $(data).find('#wrap');
@@ -579,18 +501,23 @@
 	}
     });
 
+    //If more than one page
     $('a.getpage').live('click',function($e) {
+
 	$e.preventDefault();
 	App.stopTimer();
-	var timer   = App.getTimerCurrent();
-	var pagekey = this.href.split('?')[1];
-	var posted  = $("form#answerform").serialize()+'&submit=page&timer='+timer+'&'+pagekey;
+
+	var timer   = App.getTimerCurrent(),
+	    pagekey = this.href.split('?')[1],
+	    posted  = $("form#answerform").serialize()+'&submit=page&timer='+timer+'&'+pagekey;
+
 	$.post('/check', posted,
 		function(data) {
 
 		    var content = $(data).find('#wrap');
 		    $('#content').html(content);
 
+		    //find appropriate timer value
 		    if((data.search('statusnew') != -1)) {
 			App.loadTimer(0);
 		    } else if((data.search('statusactive') != -1)) {
@@ -605,18 +532,22 @@
 	});
     });
 
-/*	Check, New, Clear			*/
+    //	Check, New, Clear			
     $('div#controls input[type=submit]').live('click', function($e) {
+
 	$e.preventDefault();
 	App.stopTimer();
-	var timer = App.getTimerCurrent();
-	posted = $("form#answerform").serialize()+'&submit='+this.value+'&timer='+timer;
+
+	var timer = App.getTimerCurrent(),
+	    posted = $("form#answerform").serialize()+'&submit='+this.value+'&timer='+timer;
+
 	$.post('/check', posted,
 		function(data) {
 
 		    var content = $(data).find('#wrap');
 		    $('#content').html(content);
 
+		    //find appropriate timer value
 		    if((data.search('statusnew') != -1)) {
 			App.loadTimer(0);
 		    } else if((data.search('statusactive') != -1)) {
@@ -631,18 +562,18 @@
 	});
     });
     
-/*	Modeselects: viewmode, runmode, padmode, timermode		*/
+    //	Modeselects: viewmode, runmode, padmode, timermode
     $('div#controls input[type=radio]').live('click', function($e) {
 
 	App.stopTimer();
-	var timer    = App.getTimerCurrent();
-	var posted   = $("form#answerform").serialize();
-	    posted   = posted+'&submit=Radio&timer='+timer;
-	var timersav = $('.timerwrap').html();
-	var statssav = $('#statistics').html();
 
-	var selectmode = ($(this).attr('name'));
-	var selectval  = ($(this).val());
+	var $radio     = $(this),
+	    selectmode = $radio.attr('name'),
+	    selectval  = $radio.val(),
+	    timerval   = App.getTimerCurrent(),
+	    posted     = $("form#answerform").serialize()+'&submit=Radio&timer='+timerval,
+	    timersav   = $('.timerwrap').html(),
+	    statssav   = $('#statistics').html();
 
 	$.post('/check', posted,
 		function(data) {
@@ -650,14 +581,16 @@
 		    var content = $(data).find('#wrap');
 		    $('#content').html(content);
 
-    /* App.findFocus needs adjusted empty flag for non stored filled answers */
+    		    // App.findFocus needs adjusted empty flag 
+		    // for non db stored but filled answers.
 		    $('div.prob').each(function(index){ 
-	   		if($(this).find('div.answer input').val() != '') {
-			    $(this).removeClass('empty');
+			var $prob = $(this);
+	   		if($prob.find('div.answer input').val() != '') {
+			    $prob.removeClass('empty');
 	   		}
 		    });
 
-		    $('.timerwrap').html(timersav);
+		    $('.timerwrap').html(timersav); 
 		    $('#statistics').html(statssav);
 
 		    App.checkTimermode();
@@ -667,26 +600,28 @@
 	});
     });
 
-/* 	Print Preview, Print Record		*/
+    // 	Print Preview, Print Record
     $('div#recordopts a').live('click', function($e) {
+
 	$e.preventDefault();
-	var winsrc   = $(this).attr('href');
-	var wintitle = $(this).attr('title');
 
-	/*
-    	var winparam = "width=780,height=600,toolbar=yes,"+
-						"scrollbars=yes,location=yes";
-						*/
-    	var winparam = "width=780,height=600";
+	var $option  = $(this),
+	    winsrc   = $option.attr('href'),
+	    wintitle = $option.attr('title'),
+    	    winparam = "width=780,height=600",
+	    action   = this.href.split('/').reverse()[0];
 
-	if(this.href.split('/').reverse()[0] == 'printpreview') {
-	window.open( winsrc, 'PrintPreview', winparam);
-	}
-	if(this.href.split('/').reverse()[0] == 'print') {
-	window.print();
-	}
-	if(this.href.split('/').reverse()[0] == 'close') {
-	$('div#recordWrap').hide();
+	if(action == 'printpreview') {
+
+	    window.open( winsrc, 'PrintPreview', winparam);
+
+    	} else if(action == 'print') {
+
+	    window.print();
+
+    	} else if(action == 'close') {
+
+	    $('div#recordWrap').hide();
 	}
     });
  }
@@ -851,6 +786,34 @@
   ((secure)  ? ";secure"           : "" );
 }
 
+ // Custom key functionality
+ document.onkeydown = function (event) {
+
+    var code;
+    var e;
+    if (document.all) {
+	if (!event) {
+            var e = window.event;
+            code = e.keyCode;
+	}
+    } else if (event.which) {
+    	code = event.which;
+    	e = event;
+    }
+
+    var runmode = App.getRunmode();
+
+    if (((code == 13) || (code == 9)) && !e.shiftKey) {//ENTER || TAB
+    	if ((runmode == 'all') && (code == 9)) {//TAB - use native, wont fire checkanswer
+	    App.startTimer();
+	} else {
+	    App.updateProbClass();
+	    App.findFocus('key');
+	    return false;
+	}
+    }
+
+ }
 /////////////////////////////////////////////////////////////////////////
 //		Plugin Modules
 //
@@ -892,6 +855,20 @@
     });
  };
 
+/////////////////////////////////////////////////////////////////////////
+//
+//		Application Calls
+//
+  
+ App.callPreps = function  () { //non-event based
+    App.prepPanelctrl(); //show div#panelctrl
+    App.prepInputSize(); //reduce input size
+    App.prepModeselect(); //show unselected state
+    App.registerTips(); //tip handlers need rebinding every update
+    App.checkKeypadmode(); //show/hide
+    App.checkTimermode(); //show/hide
+ }
+
 
  $.easing.def = "jswing";
  App.countUp(); //setTimeout recursive
@@ -902,3 +879,4 @@
  App.loadTimer(App.getTimerStored()); //.append
  App.callPreps();
  App.findFocus('post');
+
