@@ -7,28 +7,8 @@
 //
 //
 
- // Used with TAB and ENTER form traversing
- // Sets class for current problem state(since no ajax update).
- App.updateProbClass = function () {
-    $('form div.prob').each(function(index) {
-
-	var $prob = $(this),
-	    answr = $prob.find('div.answer input'),
-	    val   = answr.val();
-      
-	  
-	if(val == '') {
-	    $prob.removeClass('yes no filled').addClass('empty');
-	    answr.removeClass('incorrect');
-	} else {
-	    $prob.removeClass('empty no yes').addClass('filled');
-	    answr.removeClass('incorrect');
-	}
-    });
- }
-
  //Force answer inputs to size=1
- App.prepInputSize = function () {
+ App.limitInputSize = function () {
     $('div.prob input').attr('size', '1');
  }
 
@@ -129,6 +109,7 @@
     });
 
 
+    // Open or close depending on present state.
     function togglePanels(id) {
 
     	var thispnl    = $('#'+id), // clicked panelctrl
@@ -139,7 +120,6 @@
 
 
     	// Toggle class for clicked panel.
-    	// Open or close depending on present state.
     	if(thispnl.hasClass('displayopen') ) {
 	    thispnl.removeClass('displayopen'); 
     	} else {
@@ -147,7 +127,7 @@
     	}
 
     	// Check for other panel(not clicked) being open. 
-    	// If update class and set otherpnl to animate hide (below).
+    	// If open update class and set otherpnl to animate hide (below).
     	pnlctrl.not('#'+id).each(function() { //dont use thispnl because it is a jquery object
 	    var $pnl = $(this);
 	    if($pnl.hasClass('displayopen') ) {
@@ -211,7 +191,7 @@
 			    	if(timermode == 'on') {
 			    	    $('div.timerwrap').show();
 			    	}
-	 			App.findFocus('get')
+				App.publish('findFocus', ['get']);
 	    });
     	} else { //psetwrap div always present so must check reportwrap first
   	    pset.slideDown( 300, function(){
@@ -221,7 +201,7 @@
 			    	if(timermode == 'on') {
 			    	    $('div.timerwrap').show();
 			    	}
-		    		App.findFocus('get')
+				App.publish('findFocus', ['get']);
 	    });
     	}
      }//showProblemdisplay
@@ -232,61 +212,30 @@
  App.prepOptionCookies = function () {
 
 /* IE needs binding to 'click'  for radio,select inputs	*/
-    //if ($.browser.msie) {
-    	$('#opmode input[type=radio]').live('click', function($e) {
-	    App.setCookie('opmode', this.value, 30, '/');
-    	});
+    $('#opmode input[type=radio]').live('click', function($e) {
+	App.setCookie('opmode', this.value, 30, '/');
+    });
      
-    	$("#sizemode select").live('click', function() {
-	    App.setCookie('sizemode', this.value, 30, '/');
-    	});
+    $("#sizemode select").live('click', function() {
+	App.setCookie('sizemode', this.value, 30, '/');
+    });
      
-    	$("#rangemode select:eq(0)").live('click', function() {
-	    App.setCookie('rangemode0', this.value, 30, '/');
-    	});
+    $("#rangemode select:eq(0)").live('click', function() {
+	App.setCookie('rangemode0', this.value, 30, '/');
+    });
      
-    	$("#rangemode select:eq(1)").live('click', function() {
-	    App.setCookie('rangemode1', this.value, 30, '/');
-    	});
+    $("#rangemode select:eq(1)").live('click', function() {
+	App.setCookie('rangemode1', this.value, 30, '/');
+    });
      
-    	$("#opmode select:eq(0)").live('click', function() {
-	    App.setCookie('timesmode', this.value, 30, '/');
-    	});
+    $("#opmode select:eq(0)").live('click', function() {
+	App.setCookie('timesmode', this.value, 30, '/');
+    });
      
-    	$("#opmode select:eq(1)").live('click', function() {
-	    App.setCookie('expmode', this.value, 30, '/');
-    	});
+    $("#opmode select:eq(1)").live('click', function() {
+	App.setCookie('expmode', this.value, 30, '/');
+    });
      
-	/*
-    } else {
-    
-    	$('#opmode input[type=radio]').live('change', function($e) {
-	    App.setCookie('opmode', this.value, 30, '/');
-    	});
-     
-    	$("#sizemode select").live('change', function() {
-	    App.setCookie('sizemode', this.value, 30, '/');
-    	});
-     
-    	$("#rangemode select:eq(0)").live('change', function() {
-	    App.setCookie('rangemode0', this.value, 30, '/');
-    	});
-
-    	$("#rangemode select:eq(1)").live('change', function() {
-	    App.setCookie('rangemode1', this.value, 30, '/');
-    	});
-
-    	$("#opmode select:eq(0)").live('change', function() {
-	    App.setCookie('timesmode', this.value, 30, '/');
-    	});
-
-    	$("#opmode select:eq(1)").live('change', function() {
-	    App.setCookie('expmode', this.value, 30, '/');
-    	});
-
-    }
-    */
-
 
     $("#reportmode input:eq(0)").live('click', function() {
 	if($(this).is(':checked')){
@@ -317,15 +266,12 @@
  App.prepKeypad = function () {
 
     $('div#keypad span').live('click',function($e) {
-		App.findFocus('keypad', $(this).text());
-    });
-
-    $('div.prob input').live('focus',function($e) {
-    		$('form div.prob').removeClass('current');
-		$(this).parent().parent().addClass('current');
+	var key = $(this).text();
+	App.publish('findFocus', ['keypad', key]);
     });
 
  }
+
 
  App.checkKeypadmode = function () {
     var padmode = App.getPadmode();
@@ -338,142 +284,15 @@
  }
 
 
+ //use .live to cover both findFocus() and native TAB
+ App.updateInputClass = function () {
 
-/*
- * 'get':PSet not ajax, not posted
- * 'key':PSet not ajax, not posted; PSet classes updated; Check for PSet done;
- * 'post':PSet ajax, posted;
- *
- * 'done':PSet ajax, posted; Breakes trigger loop for 'single'; 
- * 'active':PSet ajax, posted;
- * 'new':PSet ajax, posted;
- *
- *
- * IE need delay if PSet is ajax updated in order to find focus.
- *
- */
-
- App.findFocus = function (state, value) {
-    if(state === undefined) { state = 'get';}
-    if(value === undefined) { value = '0';}
-
-    var timer     = App.getTimerCurrent(),
-        runmode   = App.getRunmode(),
-        viewmode  = App.getViewmode(),
-        timermode = App.getTimermode();
-
-    var probs  = $('div.prob'),
-        empty  = $('div.prob.empty'),
-	wrong  = $('div.prob.no'),
-	chkans = $('#controls input[value="Check Answers"]');
-
-    if (state == 'get') { //records; no new pset
-	if(empty.length != 0) {
-    	    empty.eq(0).find('input').focus();
-	} else if (wrong.length != 0) {
-    	    wrong.eq(0).find('input').focus();
-	}
-    } else if (state == 'post') { 
-
-	if(timer != 0) { App.startTimer(); }
-
-	if (empty.length != 0) {
-	    if(runmode == 'single') {
-		empty.css({display:'none'});
-		empty.eq(0).css({display:'block'}).addClass('single');
-	    }
-
-	    if($.browser.msie) {
-	    	setTimeout(function(){
-    	    	   empty.eq(0).find('input').focus();
-	    	}, 1000);
-	    } else {
-    	    	empty.eq(0).find('input').focus();
-	    }
-
-	} else if (wrong.length != 0) { //no empties
-	    if($.browser.msie) {
-	    	setTimeout(function(){
-    	            wrong.eq(0).find('input').focus();
-	    	}, 1000);
-	    } else {
-    	    	wrong.eq(0).find('input').focus();
-	    }
-	}
-    } else if (state == 'key') { //keyboard
-	App.startTimer();
-	if((empty.length != 0) && (runmode == 'single')) {
-    	    probs.removeClass('single');
-	    empty.eq(0).addClass('single').css({display:'block'}).find('input').focus();
-	} else if (empty.length != 0) { //runmode='all'
-	    empty.eq(0).find('input').focus();
-	} else if (wrong.length != 0) {
-	    wrong.eq(0).find('input').focus();
-    	} else  { //no empties
-	    chkans.trigger('click');
-	}
-    } else if (state == 'keypad') {
-	App.startTimer();
-	if(value == 'Next') { //possibly combine Next/Prev.  Use old/new.
-	    var cur = $('form div.prob.current');
-	    if (viewmode == 'vertical') {
-	     	nxt = cur.parent().next().find('div.prob');
-	    } else {
-	     	nxt = cur.next();
-	    }
-	    if(runmode == 'single') {
-		if(nxt.length != 0) {
-    	    	    cur.removeClass('single');
-    	    	    nxt.addClass('single').css({display:'block'}).find('input').focus();
-		} else {
-	    	    cur.find('input').focus();
-		}
-	    } else {
-		if(nxt.length != 0) {
-	    	    nxt.find('input').focus();
-		} else {
-	    	    cur.find('input').focus();
-		}
-	    }
-	} else if(value == 'Prev') {
-	    var cur = $('form div.prob.current');
-	    if (viewmode == 'vertical') {
-	     	prv = cur.parent().prev().find('div.prob');
-	    } else {
-	     	prv = cur.prev();
-	    }
-	    if(runmode == 'single') {
-		if(prv.length != 0) {
-    	    	    cur.removeClass('single');
-    	    	    prv.addClass('single').css({display:'block'}).find('input').focus();
-		} else {
-	    	    cur.find('input').focus();
-		}
-	    } else {
-		if(prv.length != 0) {
-	    	    prv.find('input').focus();
-		} else {
-	    	    cur.find('input').focus();
-		}
-	    }
-	} else if(value == 'Back') {
-	    var cur    = $('div.prob.current input'),
-	        oldval = cur.val(),
-	        newval = oldval.substr(0, oldval.length-1);
-
-	    cur.val(newval).focus();
-
-	} else { //value = digit or -
-	    var cur    = $('div.prob.current input'),
-	        oldval = cur.val(),
-		newval = oldval+value;
-
-	    cur.val(newval).focus();
-	}
-    }
-
-
+    $('div.prob input').live('focus',function() { 
+	$('div.prob').removeClass('current');
+	$(this).parent().parent().addClass('current');
+    });
  }
+
 
 
  App.prepControls = function () {
@@ -494,9 +313,9 @@
 		    var content = $(data).find('#wrap');
 		    $('#content').html(content);
 
-    		    App.loadTimer(App.getTimerStored());
-		    App.callPreps();
-		    App.findFocus('post');
+    		    App.loadTimer(App.getTimerStored());//todo:instead use cahced timer?
+ 		    App.publish('prepApp');
+		    App.publish('findFocus', ['post']);
 	    });
 	}
     });
@@ -525,10 +344,11 @@
 			App.startTimer();
 		    } else { // done 
     		    	App.loadTimer(App.getTimerStored());
+			App.stopTimer();
 		    }
 
-		    App.callPreps();
-    		    App.findFocus('post');
+ 		    App.publish('prepApp');
+		    App.publish('findFocus', ['post']);
 	});
     });
 
@@ -557,8 +377,8 @@
     		    	App.loadTimer(App.getTimerStored());
 		    }
 
-		    App.callPreps();
-    		    App.findFocus('post');
+ 		    App.publish('prepApp');
+		    App.publish('findFocus', ['post']);
 	});
     });
     
@@ -595,8 +415,8 @@
 
 		    App.checkTimermode();
 
-		    App.callPreps();
-    		    App.findFocus('post');
+ 		    App.publish('prepApp');
+		    App.publish('findFocus', ['post']);
 	});
     });
 
@@ -786,6 +606,26 @@
   ((secure)  ? ";secure"           : "" );
 }
 
+ // Used with TAB and ENTER form traversing
+ // Sets class for current problem state(since no ajax update).
+ App.updateProbClass = function () {
+    $('form div.prob').each(function(index) {
+
+	var $prob = $(this),
+	    answr = $prob.find('div.answer input'),
+	    val   = answr.val();
+      
+	  
+	if(val == '') {
+	    $prob.removeClass('yes no filled').addClass('empty');
+	    answr.removeClass('incorrect');
+	} else {
+	    $prob.removeClass('empty no yes').addClass('filled');
+	    answr.removeClass('incorrect');
+	}
+    });
+ }
+
  // Custom key functionality
  document.onkeydown = function (event) {
 
@@ -808,7 +648,7 @@
 	    App.startTimer();
 	} else {
 	    App.updateProbClass();
-	    App.findFocus('key');
+	    App.publish('findFocus', ['keyboard']);
 	    return false;
 	}
     }
@@ -860,23 +700,160 @@
 //		Application Calls
 //
   
- App.callPreps = function  () { //non-event based
-    App.prepPanelctrl(); //show div#panelctrl
-    App.prepInputSize(); //reduce input size
-    App.prepModeselect(); //show unselected state
+
+ App.subscribe('prepApp',  function  () { //non-event based
+    App.prepPanelctrl(); //show div#panelctrl. bind mouseover/mouseout
+    App.limitInputSize(); //reduce input size
+    App.prepModeselect(); //show and style based on state
     App.registerTips(); //tip handlers need rebinding every update
     App.checkKeypadmode(); //show/hide
     App.checkTimermode(); //show/hide
- }
+ });
 
+
+ App.subscribe ('findFocus',  function (state, value) {
+	   
+ // 'get':PSet not ajax, not posted
+ // 'keyboard':PSet not ajax, not posted; PSet classes updated; Check for PSet done;
+ // 'post':PSet ajax, posted;
+ //
+ // 'done':PSet ajax, posted; Breakes trigger loop for 'single'; 
+ // 'active':PSet ajax, posted;
+ // 'new':PSet ajax, posted;
+ //
+ //
+ // IE need delay if PSet is ajax updated in order to find focus.
+ //
+
+    if(state === undefined) { state = 'get';}
+    if(value === undefined) { value = '0';}
+
+    var timer     = App.getTimerCurrent(),
+        runmode   = App.getRunmode(),
+        viewmode  = App.getViewmode(),
+        timermode = App.getTimermode();
+
+    var probs  = $('div.prob'),
+        empty  = $('div.prob.empty'),
+	wrong  = $('div.prob.no'),
+	chkans = $('#controls input[value="Check Answers"]');
+
+    if (state == 'get') { //records; no new pset
+	if(empty.length != 0) {
+    	    empty.eq(0).find('input').focus();
+	} else if (wrong.length != 0) {
+    	    wrong.eq(0).find('input').focus();
+	}
+    } else if (state == 'post') { 
+
+
+	if (empty.length != 0) {
+	    if(timer != 0) { App.startTimer(); }
+	    if(runmode == 'single') {
+		empty.css({display:'none'});
+		empty.eq(0).css({display:'block'}).addClass('single');
+	    }
+
+	    if($.browser.msie) {
+	    	setTimeout(function(){
+    	    	   empty.eq(0).find('input').focus();
+	    	}, 1000);
+	    } else {
+    	    	empty.eq(0).find('input').focus();
+	    }
+
+	} else if (wrong.length != 0) { //no empties
+	    if($.browser.msie) {
+	    	setTimeout(function(){
+    	            wrong.eq(0).find('input').focus();
+	    	}, 1000);
+	    } else {
+    	    	wrong.eq(0).find('input').focus();
+	    }
+	}
+    } else if (state == 'keyboard') { 
+	App.startTimer();
+	if((empty.length != 0) && (runmode == 'single')) {
+    	    probs.removeClass('single');
+	    empty.eq(0).addClass('single').css({display:'block'}).find('input').focus();
+	} else if (empty.length != 0) { //runmode='all'
+	    empty.eq(0).find('input').focus();
+	} else if (wrong.length != 0) {
+	    wrong.eq(0).find('input').focus();
+    	} else  { //no empties
+	    chkans.trigger('click');
+	}
+    } else if (state == 'keypad') {
+	App.startTimer();
+	if(value == 'Next') { //todo:possibly combine Next/Prev.  Use old/new.
+	    var cur = $('form div.prob.current');
+	    if (viewmode == 'vertical') {
+	     	nxt = cur.parent().next().find('div.prob');
+	    } else {
+	     	nxt = cur.next();
+	    }
+	    if(runmode == 'single') {
+		if(nxt.length != 0) {
+    	    	    cur.removeClass('single');
+    	    	    nxt.addClass('single').css({display:'block'}).find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    } else {
+		if(nxt.length != 0) {
+	    	    nxt.find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    }
+	} else if(value == 'Prev') {
+	    var cur = $('form div.prob.current');
+	    if (viewmode == 'vertical') {
+	     	prv = cur.parent().prev().find('div.prob');
+	    } else {
+	     	prv = cur.prev();
+	    }
+	    if(runmode == 'single') {
+		if(prv.length != 0) {
+    	    	    cur.removeClass('single');
+    	    	    prv.addClass('single').css({display:'block'}).find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    } else {
+		if(prv.length != 0) {
+	    	    prv.find('input').focus();
+		} else {
+	    	    cur.find('input').focus();
+		}
+	    }
+	} else if(value == 'Back') {
+	    var cur    = $('div.prob.current input'),
+	        oldval = cur.val(),
+	        newval = oldval.substr(0, oldval.length-1);
+
+	    cur.val(newval).focus();
+
+	} else { //value = digit or -
+	    var cur    = $('div.prob.current input'),
+	        oldval = cur.val(),
+		newval = oldval+value;
+
+	    cur.val(newval).focus();
+	}
+    }
+
+
+ });
 
  $.easing.def = "jswing";
  App.countUp(); //setTimeout recursive
- App.prepPaneldisplay();
+ App.prepPaneldisplay();//live 
  App.prepOptionCookies(); //live 'click' panelctrl
  App.prepControls(); //live
- App.prepKeypad(); //live
  App.loadTimer(App.getTimerStored()); //.append
- App.callPreps();
- App.findFocus('post');
+ App.publish('prepApp');
+ App.publish('findFocus', ['post']);
+ App.prepKeypad(); //live
+ App.updateInputClass(); //live
 
